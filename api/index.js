@@ -21,6 +21,7 @@ const TABLES = {
   packages: { table: 'packages', order: { column: 'id', ascending: true } },
   reviews: { table: 'reviews', order: { column: 'id', ascending: false } },
   settings: { table: 'settings', order: { column: 'id', ascending: true } },
+  users: { table: 'users', order: { column: 'id', ascending: true } },
   vehicles: { table: 'vehicles', order: { column: 'id', ascending: true } },
 };
 
@@ -43,6 +44,10 @@ export default async function handler(req, res) {
     if (req.method === 'GET') {
       const { data, error } = await supabase.from(TABLE).select('*').order(ORDER.column, { ascending: ORDER.ascending });
       if (error) throw error;
+      if (path === 'users') {
+        const safeData = data.map(({ password, ...rest }) => rest);
+        return res.status(200).json(safeData);
+      }
       return res.status(200).json(data);
     }
 
@@ -59,6 +64,20 @@ export default async function handler(req, res) {
         const { data, error } = await supabase.from(TABLE).insert({ key, value }).select().single();
         if (error) throw error;
         return res.status(201).json(data);
+      }
+
+      if (path === 'users') {
+        const { id, created_at, updated_at, ...payload } = req.body || {};
+        if (!payload.name || !payload.email || !payload.password) {
+          return res.status(400).json({ error: 'Name, email and password are required' });
+        }
+        if (!payload.role || !['admin', 'staff'].includes(payload.role)) {
+          payload.role = 'staff';
+        }
+        const { data, error } = await supabase.from(TABLE).insert(payload).select().single();
+        if (error) throw error;
+        const { password, ...safeData } = data;
+        return res.status(201).json(safeData);
       }
 
       const { id, created_at, ref, status, admin_notes, ...payload } = req.body || {};
@@ -79,8 +98,17 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT') {
-      const { id, created_at, ...payload } = req.body || {};
+      const { id, created_at, updated_at, ...payload } = req.body || {};
       if (!id) return res.status(400).json({ error: 'id is required' });
+      if (path === 'users') {
+        const { password, ...rest } = payload;
+        const updateData = { ...rest };
+        if (password) updateData.password = password;
+        const { data, error } = await supabase.from(TABLE).update(updateData).eq('id', id).select().single();
+        if (error) throw error;
+        const { password: _, ...safeData } = data;
+        return res.status(200).json(safeData);
+      }
       const { data, error } = await supabase.from(TABLE).update(payload).eq('id', id).select().single();
       if (error) throw error;
       return res.status(200).json(data);

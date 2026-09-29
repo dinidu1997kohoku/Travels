@@ -7,10 +7,11 @@ import {
 import { api } from '../lib/api';
 
 const ADMIN_KEY = 'st-admin-auth';
-const PASSWORD = 'serendib2026';
+const DEFAULT_PASSWORD = 'serendib2026';
 
 const TABS = [
   { k: 'dashboard', l: 'Dashboard', icon: LayoutDashboard },
+  { k: 'users', l: 'Users', icon: Lock },
   { k: 'bookings', l: 'Bookings', icon: CalendarCheck },
   { k: 'custom', l: 'Custom Tours', icon: Wand2 },
   { k: 'inquiries', l: 'Vehicle Inquiries', icon: MessageSquare },
@@ -55,6 +56,7 @@ const ENDPOINTS: Record<string, string> = {
   inquiries: '/api/inquiries',
   offers: '/api/offers',
   settings: '/api/settings',
+  users: '/api/users',
 };
 
 // field schema: [key, label, type]  types: text, textarea, number, bool, date, csv, json, status, readonly
@@ -186,6 +188,15 @@ const SCHEMAS: Record<string, { list: string[]; fields: F[] }> = {
     list: ['key', 'value'],
     fields: [['key', 'Key', 'readonly'], ['value', 'Value', 'textarea']],
   },
+  users: {
+    list: ['name', 'email', 'role', 'created_at'],
+    fields: [
+      ['name', 'Full Name', 'text'],
+      ['email', 'Email', 'text'],
+      ['password', 'Password', 'text'],
+      ['role', 'Role', 'role'],
+    ],
+  },
 };
 
 const SETTING_LABELS: Record<string, string> = {
@@ -225,6 +236,7 @@ function cellPreview(v: any): string {
 
 export function Admin() {
   const [authed, setAuthed] = useState(() => { try { return localStorage.getItem(ADMIN_KEY) === '1'; } catch { return false; } });
+  const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [pwErr, setPwErr] = useState('');
   const [tab, setTab] = useState('dashboard');
@@ -241,12 +253,21 @@ export function Admin() {
   const [page, setPage] = useState(0);
   const PER_PAGE = 12;
 
-  const login = (e: React.FormEvent) => {
+  const login = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (pw === PASSWORD) {
-      try { localStorage.setItem(ADMIN_KEY, '1'); } catch {}
-      setAuthed(true);
-    } else setPwErr('Incorrect password.');
+    setPwErr('');
+    try {
+      const users = await api<any[]>('/api/users');
+      const found = users.find((u: any) => u.email === email && u.password === pw);
+      if (found) {
+        try { localStorage.setItem(ADMIN_KEY, '1'); localStorage.setItem('st-user-email', found.email); localStorage.setItem('st-user-role', found.role); } catch {}
+        setAuthed(true);
+      } else {
+        setPwErr('Invalid email or password.');
+      }
+    } catch {
+      setPwErr('Login failed. Please try again.');
+    }
   };
 
   const load = async (t: string) => {
@@ -267,7 +288,7 @@ export function Admin() {
   useEffect(() => {
     if (!authed) return;
     (async () => {
-      const keys = ['bookings', 'custom', 'inquiries', 'messages', 'destinations', 'packages', 'vehicles', 'hotels', 'reviews', 'blogs', 'faqs', 'gallery', 'offers'];
+      const keys = ['bookings', 'custom', 'inquiries', 'messages', 'destinations', 'packages', 'vehicles', 'hotels', 'reviews', 'blogs', 'faqs', 'gallery', 'offers', 'users'];
       const c: Record<string, number> = {};
       await Promise.all(keys.map(async (k) => {
         try { const d = await api<any[]>(ENDPOINTS[k]); c[k] = Array.isArray(d) ? d.length : 0; } catch { c[k] = 0; }
@@ -302,6 +323,22 @@ export function Admin() {
     try {
       if (tab === 'settings') {
         await api(ENDPOINTS.settings, 'PUT', { key: editing.key, value: String(form.value ?? '') });
+      } else if (tab === 'users') {
+        const payload: Record<string, any> = {};
+        schema.fields.forEach(([k, , t]) => {
+          const v = fromFormValue(form[k], t);
+          if (v !== undefined && v !== '') payload[k] = v;
+        });
+        if (isNew) {
+          await api(ENDPOINTS[tab], 'POST', payload);
+        } else {
+          const updateData: Record<string, any> = { id: editing.id };
+          if (payload.name) updateData.name = payload.name;
+          if (payload.email) updateData.email = payload.email;
+          if (payload.password) updateData.password = payload.password;
+          if (payload.role) updateData.role = payload.role;
+          await api(ENDPOINTS[tab], 'PUT', updateData);
+        }
       } else {
         const payload: Record<string, any> = {};
         schema.fields.forEach(([k, , t]) => {
@@ -321,7 +358,8 @@ export function Admin() {
   };
 
   const remove = async (r: any) => {
-    if (!confirm(`Delete this ${tab.slice(0, -1)}? This cannot be undone.`)) return;
+    const label = tab === 'users' ? 'user' : tab.slice(0, -1);
+    if (!confirm(`Delete this ${label}? This cannot be undone.`)) return;
     try {
       await api(ENDPOINTS[tab], 'DELETE', { id: r.id });
       await load(tab);
@@ -346,8 +384,10 @@ export function Admin() {
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-jungle-950 text-gold-300"><Lock size={24} /></span>
           <h1 className="font-display mt-4 text-center text-2xl font-semibold text-jungle-950">Owner Area</h1>
           <p className="mt-1 text-center text-sm text-ink-900/55">Private management area for Serendib Trails.</p>
-          <label className="label-field mt-6">Password</label>
-          <input type="password" className="input-field" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Enter owner password" autoFocus />
+          <label className="label-field mt-6">Email</label>
+          <input type="email" className="input-field" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Enter your email" autoFocus />
+          <label className="label-field mt-4">Password</label>
+          <input type="password" className="input-field" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Enter your password" />
           {pwErr && <p className="mt-2 text-sm font-semibold text-red-600">{pwErr}</p>}
           <button type="submit" className="btn-ocean mt-4 w-full">Sign In</button>
 
@@ -372,7 +412,7 @@ export function Admin() {
               {counts[t.k] !== undefined && <span className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ${tab === t.k ? 'bg-jungle-950/15' : 'bg-white/10'}`}>{counts[t.k]}</span>}
             </button>
           ))}
-          <button onClick={() => { try { localStorage.removeItem(ADMIN_KEY); } catch {} setAuthed(false); }} className="mt-3 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-300 hover:bg-white/10">
+          <button onClick={() => { try { localStorage.removeItem(ADMIN_KEY); localStorage.removeItem('st-user-email'); localStorage.removeItem('st-user-role'); } catch {} setAuthed(false); }} className="mt-3 flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-300 hover:bg-white/10">
             <LogOut size={17} /> Sign Out
           </button>
         </aside>
@@ -498,6 +538,11 @@ export function Admin() {
                     </select>
                   ) : t === 'readonly' ? (
                     <p className="rounded-xl bg-sand-100 px-4 py-2.5 text-sm font-semibold text-ink-900/70">{tab === 'settings' ? (SETTING_LABELS[form[k]] || form[k]) : String(form[k] ?? '—')}</p>
+                  ) : t === 'role' ? (
+                    <select className="input-field" value={form[k] ?? 'staff'} onChange={(e) => setForm((p) => ({ ...p, [k]: e.target.value }))}>
+                      <option value="staff">Staff</option>
+                      <option value="admin">Admin</option>
+                    </select>
                   ) : t === 'number' ? (
                     <input type="number" step="any" className="input-field" value={form[k] ?? ''} onChange={(e) => setForm((p) => ({ ...p, [k]: e.target.value }))} />
                   ) : t === 'date' ? (
