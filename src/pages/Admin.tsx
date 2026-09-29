@@ -350,7 +350,7 @@ export function Admin() {
           <input type="password" className="input-field" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Enter owner password" autoFocus />
           {pwErr && <p className="mt-2 text-sm font-semibold text-red-600">{pwErr}</p>}
           <button type="submit" className="btn-ocean mt-4 w-full">Sign In</button>
-          <p className="mt-3 text-center text-[11px] text-ink-900/40">Demo password: serendib2026</p>
+
         </form>
       </div>
     );
