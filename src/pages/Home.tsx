@@ -14,7 +14,7 @@ import {
 import BookingCTA from '../components/BookingCTA';
 import type { Destination, TourPackage, Review, GalleryItem, Offer, Vehicle } from '../lib/types';
 
-const HEROES = [
+const DEFAULT_HEROES = [
   { img: '/images/hero.jpg', kicker: 'Sigiriya • Cultural Triangle', title: 'The Island of Endless Wonder', sub: 'Ancient fortresses, misty tea hills, wild safaris and golden beaches — all in one magical island.' },
   { img: '/images/dest-ella.jpg', kicker: 'Ella • Hill Country', title: 'Ride the Most Beautiful Railway on Earth', sub: 'Cross the Nine Arch Bridge and wind through emerald tea estates on an unforgettable train journey.' },
   { img: '/images/dest-mirissa.jpg', kicker: 'Mirissa • South Coast', title: 'Turquoise Seas & Coconut Dreams', sub: 'Whale watching, surfing and barefoot sunsets on the palm-fringed shores of the south coast.' },
@@ -46,11 +46,13 @@ function Hero() {
   const [i, setI] = useState(0);
   const { get } = useSettings();
   const { t } = useLang();
+  const { data: heroes } = useResource<any>('/api/heroes');
+  const slides = heroes?.length ? heroes : DEFAULT_HEROES;
   useEffect(() => {
-    const id = setInterval(() => setI((v) => (v + 1) % HEROES.length), 6500);
+    const id = setInterval(() => setI((v) => (v + 1) % slides.length), 6500);
     return () => clearInterval(id);
-  }, []);
-  const h = HEROES[i];
+  }, [slides.length]);
+  const h = slides[i] || DEFAULT_HEROES[0];
   return (
     <section className="relative flex min-h-[100svh] items-center overflow-hidden">
       <AnimatePresence mode="popLayout">
@@ -99,7 +101,7 @@ function Hero() {
         </AnimatePresence>
 
         <div className="mt-12 flex items-center gap-3">
-          {HEROES.map((x, idx) => (
+          {slides.map((x, idx) => (
             <button
               key={x.title}
               onClick={() => setI(idx)}
@@ -108,10 +110,10 @@ function Hero() {
             />
           ))}
           <div className="ml-4 hidden gap-2 sm:flex">
-            <button onClick={() => setI((i - 1 + HEROES.length) % HEROES.length)} aria-label="Previous" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white transition hover:bg-white hover:text-jungle-900">
+            <button onClick={() => setI((i - 1 + slides.length) % slides.length)} aria-label="Previous" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white transition hover:bg-white hover:text-jungle-900">
               <ChevronLeft size={18} />
             </button>
-            <button onClick={() => setI((i + 1) % HEROES.length)} aria-label="Next" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white transition hover:bg-white hover:text-jungle-900">
+            <button onClick={() => setI((i + 1) % slides.length)} aria-label="Next" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/30 text-white transition hover:bg-white hover:text-jungle-900">
               <ChevronRight size={18} />
             </button>
           </div>

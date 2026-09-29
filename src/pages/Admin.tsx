@@ -12,6 +12,7 @@ const DEFAULT_PASSWORD = 'serendib2026';
 const TABS = [
   { k: 'dashboard', l: 'Dashboard', icon: LayoutDashboard },
   { k: 'users', l: 'Users', icon: Lock },
+  { k: 'heroes', l: 'Hero Images', icon: ImageIcon },
   { k: 'bookings', l: 'Bookings', icon: CalendarCheck },
   { k: 'custom', l: 'Custom Tours', icon: Wand2 },
   { k: 'inquiries', l: 'Vehicle Inquiries', icon: MessageSquare },
@@ -57,6 +58,7 @@ const ENDPOINTS: Record<string, string> = {
   offers: '/api/offers',
   settings: '/api/settings',
   users: '/api/users',
+  heroes: '/api/heroes',
 };
 
 // field schema: [key, label, type]  types: text, textarea, number, bool, date, csv, json, status, readonly
@@ -195,6 +197,15 @@ const SCHEMAS: Record<string, { list: string[]; fields: F[] }> = {
       ['email', 'Email', 'text'],
       ['password', 'Password', 'text'],
       ['role', 'Role', 'role'],
+    ],
+  },
+  heroes: {
+    list: ['title', 'kicker', 'img'],
+    fields: [
+      ['title', 'Title', 'text'],
+      ['kicker', 'Kicker / Location', 'text'],
+      ['sub', 'Subtitle', 'textarea'],
+      ['img', 'Image URL', 'text'],
     ],
   },
 };
@@ -537,6 +548,23 @@ export function Admin() {
                     </select>
                   ) : t === 'readonly' ? (
                     <p className="rounded-xl bg-sand-100 px-4 py-2.5 text-sm font-semibold text-ink-900/70">{tab === 'settings' ? (SETTING_LABELS[form[k]] || form[k]) : String(form[k] ?? '—')}</p>
+                  ) : k === 'img' && tab === 'heroes' ? (
+                    <div>
+                      <input type="file" accept="image/*" onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        const reader = new FileReader();
+                        reader.onload = async () => {
+                          try {
+                            const res = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ imageData: reader.result }) });
+                            const data = await res.json();
+                            if (data.url) setForm((p) => ({ ...p, img: data.url }));
+                          } catch {}
+                        };
+                        reader.readAsDataURL(file);
+                      }} className="input-field" />
+                      {form[k] && <img src={form[k]} alt="Preview" className="mt-2 h-20 w-32 rounded-lg object-cover" />}
+                    </div>
                   ) : t === 'role' ? (
                     <select className="input-field" value={form[k] ?? 'staff'} onChange={(e) => setForm((p) => ({ ...p, [k]: e.target.value }))}>
                       <option value="staff">Staff</option>

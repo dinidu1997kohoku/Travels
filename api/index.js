@@ -22,6 +22,7 @@ const TABLES = {
   reviews: { table: 'reviews', order: { column: 'id', ascending: false } },
   settings: { table: 'settings', order: { column: 'id', ascending: true } },
   users: { table: 'users', order: { column: 'id', ascending: true } },
+  heroes: { table: 'heroes', order: { column: 'sort_order', ascending: true } },
   vehicles: { table: 'vehicles', order: { column: 'id', ascending: true } },
 };
 
@@ -43,6 +44,12 @@ export default async function handler(req, res) {
     if (!data || data.password !== password) return res.status(401).json({ error: 'Invalid email or password' });
     const { password: _, ...safeData } = data;
     return res.status(200).json(safeData);
+  }
+
+  if (path === 'upload' && req.method === 'POST') {
+    const { imageData } = req.body || {};
+    if (!imageData) return res.status(400).json({ error: 'No image data provided' });
+    return res.status(200).json({ url: imageData });
   }
 
   if (!config) return res.status(404).json({ error: 'Not found' });
