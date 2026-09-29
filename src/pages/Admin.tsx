@@ -257,8 +257,7 @@ export function Admin() {
     e.preventDefault();
     setPwErr('');
     try {
-      const users = await api<any[]>('/api/users');
-      const found = users.find((u: any) => u.email === email && u.password === pw);
+      const found = await api<any>('/api/login', 'POST', { email, password: pw });
       if (found) {
         try { localStorage.setItem(ADMIN_KEY, '1'); localStorage.setItem('st-user-email', found.email); localStorage.setItem('st-user-role', found.role); } catch {}
         setAuthed(true);
@@ -266,7 +265,7 @@ export function Admin() {
         setPwErr('Invalid email or password.');
       }
     } catch {
-      setPwErr('Login failed. Please try again.');
+      setPwErr('Invalid email or password.');
     }
   };
 
