@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Fraunces", Georgia, serif;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+
+  --color-jungle-950: #07211d;
+  --color-jungle-900: #0b352e;
+  --color-jungle-800: #10493f;
+  --color-jungle-700: #156354;
+  --color-jungle-600: #1b7a67;
+  --color-jungle-100: #d9efe7;
+  --color-jungle-50: #eef7f3;
+
+  --color-ocean-800: #073e44;
+  --color-ocean-700: #0b5e63;
+  --color-ocean-600: #0e7c7b;
+  --color-ocean-500: #12938f;
+
+  --color-lagoon-400: #2dd4bf;
+  --color-lagoon-300: #5eead4;
+  --color-lagoon-100: #ccfbf1;
+
+  --color-sand-50: #faf6ec;
+  --color-sand-100: #f4ecda;
+  --color-sand-200: #e9dcc0;
+  --color-sand-300: #dccb9f;
+
+  --color-gold-300: #ecd189;
+  --color-gold-400: #d9a441;
+  --color-gold-500: #c9a227;
+  --color-gold-600: #a88420;
+
+  --color-sunset-400: #f08a4b;
+  --color-sunset-500: #e2703a;
+  --color-sunset-600: #c85a28;
+
+  --color-ink-900: #101f1c;
+
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-slow: float 10s ease-in-out infinite;
+  --animate-marquee: marquee 32s linear infinite;
+  --animate-kenburns: kenburns 18s ease-in-out infinite alternate;
+  --animate-spin-slow: spin 14s linear infinite;
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-14px); }
+  }
+  @keyframes marquee {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+  @keyframes kenburns {
+    from { transform: scale(1) translateY(0); }
+    to { transform: scale(1.12) translateY(-1.5%); }
+  }
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    @apply bg-sand-50 text-ink-900 font-sans antialiased;
+  }
+  ::selection {
+    background: #0e7c7b;
+    color: #fff;
+  }
+  ::-webkit-scrollbar {
+    width: 11px;
+    height: 11px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #f4ecda;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #0e7c7b, #0b352e);
+    border-radius: 8px;
+    border: 2px solid #f4ecda;
+  }
+}
+
+@layer components {
+  .glass {
+    background: rgb(255 255 255 / 0.14);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .glass-dark {
+    background: rgb(7 33 29 / 0.55);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+  .text-shadow-hero {
+    text-shadow: 0 2px 24px rgb(0 0 0 / 0.55), 0 1px 3px rgb(0 0 0 / 0.6);
+  }
+  .card-hover {
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 24px 48px -16px rgb(11 53 46 / 0.35);
+  }
+  .img-zoom img {
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .img-zoom:hover img {
+    transform: scale(1.08);
+  }
+  .input-field {
+    @apply w-full rounded-xl border border-jungle-900/15 bg-white px-4 py-2.5 text-sm text-ink-900 placeholder:text-ink-900/35 outline-none transition focus:border-ocean-600 focus:ring-2 focus:ring-ocean-600/25;
+  }
+  .label-field {
+    @apply mb-1.5 block text-xs font-semibold uppercase tracking-wider text-jungle-900/70;
+  }
+  .btn-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-gold-500 to-gold-400 px-7 py-3 text-sm font-bold uppercase tracking-wider text-jungle-950 shadow-lg shadow-gold-500/30 transition hover:shadow-xl hover:shadow-gold-500/40 hover:brightness-105 active:scale-95;
+  }
+  .btn-ocean {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-ocean-700 to-ocean-600 px-7 py-3 text-sm font-bold uppercase tracking-wider text-white shadow-lg shadow-ocean-700/30 transition hover:shadow-xl hover:brightness-110 active:scale-95;
+  }
+  .btn-outline-light {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border-2 border-white/70 px-7 py-3 text-sm font-bold uppercase tracking-wider text-white transition hover:bg-white hover:text-jungle-900 active:scale-95;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition cursor-pointer border;
+  }
+  .section-pad {
+    @apply py-16 md:py-24;
+  }
+  .container-x {
+    @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+  }
+  .prose-travel p {
+    @apply mb-4 leading-relaxed text-ink-900/80;
+  }
+  .prose-travel h3 {
+    @apply font-display text-xl font-semibold text-jungle-900 mt-8 mb-3;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
